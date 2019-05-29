@@ -60,7 +60,8 @@ Here is an incomplete definition of negation:
 -}
 
 ¬ : Bool → Bool
-¬ x = {!!}
+¬ true = false
+¬ false = true
 
 {-
 Take a look at the first line, this is the type declaration. It says
@@ -106,10 +107,14 @@ the underscores are in the positions where the arguments should go.
 -}
 
 _∧_ : Bool → Bool → Bool
-x ∧ y = {!!}
+true ∧ true = true
+true ∧ false = false
+false ∧ y = false
 
 _∨_ : Bool → Bool → Bool
-x ∨ y = {!!}
+true ∨ y = true
+false ∨ true = true
+false ∨ false = false
 
 {-
 Here is a polymorphic definition of the if-then-else function.
@@ -160,19 +165,23 @@ suc m + n = suc (m + n)
 
 {- Now try to define the following functions yourself: -}
 is-zero : Nat → Bool
-is-zero n = {!!}
+is-zero zero = true
+is-zero (suc n) = false
 
 _-_ : Nat → Nat → Nat         -- Return zero instead of negative numbers
-m - n = {!!}
+m - zero = m
+zero - suc n = zero
+suc m - suc n = m - n
 
 minimum : Nat → Nat → Nat
-minimum m n = {!!}
+minimum m n = if is-zero (m - n) then m else n
 
 maximum : Nat → Nat → Nat
-maximum m n = {!!}
+maximum m n = if is-zero (m - n) then n else m
 
 _*_ : Nat → Nat → Nat
-m * n = {!!}
+zero * n = zero
+suc m * n = n + m * n
 
 {-
 If Agda marks (part of) your definition in salmon-orange after you reload the file,
@@ -217,7 +226,7 @@ fst : {A B : Set} → A × B → A
 fst (x , y) = x
 
 snd : {A B : Set} → A × B → B
-snd p = {!!}
+snd (x , y) = y
 
 -- Sum type (unicode: \uplus). This corresponds to the proposition "A or B".
 data _⊎_ (A B : Set) : Set where
@@ -229,16 +238,17 @@ data _⊎_ (A B : Set) : Set where
 -- "If A and B, then B and A"
 -- hint: Agda is smart. After case 'splitting', try refining the goal using C-c C-r.
 ×-comm : {A B : Set} → A × B → B × A
-×-comm p = {!!}
+×-comm (x , x₁) = x₁ , x
 
 -- "If A and (B or C), then (A and B) or (A and C)"
 -- Hint: use C-c C-, to see the type of variables in scope
 distr : {A B C : Set} → A × (B ⊎ C) → (A × B) ⊎ (A × C)
-distr p = {!!}
+distr (x , left x₁) = left (x , x₁)
+distr (x , right x₁) = right (x , x₁)
 
 -- Modus ponens: "If (A implies B) and A, then B"
 app : {A B : Set} → (A → B) × A → B
-app p = {!!}
+app (x , x₁) = x x₁
 
 
 {-
@@ -277,13 +287,14 @@ cursor in the hole below, press C-c C-c and 'split on the result' by pressing en
 without providing a variable to pattern match over.
 -}
 ×'-comm : {A B : Set} → A ×' B → B ×' A
-×'-comm p = {!!}
+fst' (×'-comm p) = snd' p
+snd' (×'-comm p) = fst' p
 {-
 However, we can still treat _×'_ as a data type and prove commutativity of _×'_ in exactly
 the same way we proved it for _×_, i.e. by pattern matching over p:
 -}
 ×'-comm' : {A B : Set} → A ×' B → B ×' A
-×'-comm' p = {!!}
+×'-comm' (fst'' ,' snd'') = snd'' ,' fst''
 
 {-
 Part 4: The identity type
@@ -320,7 +331,7 @@ automatically checked by Agda. For example, we can write a test that
 -}
 
 ¬¬true : ¬ (¬ true) ≡ true
-¬¬true = {!refl!}
+¬¬true = refl
 
 {-
 If you implemented the function ¬ correctly, you should be able to fill in
@@ -340,7 +351,7 @@ should be `3 ≡ 3`:
 -}
 
 3+5-5 : (3 + 5) - 5 ≡ 3
-3+5-5 = {!!}
+3+5-5 = refl
 
 {-
 If you want, you can try to come up with some additional tests about the functions
@@ -358,15 +369,18 @@ To prove this lemma, you cannot use refl straight away because Agda cannot see t
 ¬ (¬ b) is always equal to b from just the definition of ¬. Instead, you first have
 to do a case split on b (using C-c C-c)
 -}
-¬¬-elim b = {!!}
+¬¬-elim true = refl
+¬¬-elim false = refl
 
 {- Also try to prove the following lemmas: -}
 
 ∧-same : (b : Bool) → b ∧ b ≡ b
-∧-same b = {!!}
+∧-same true = refl
+∧-same false = refl
 
 if-same : {A : Set} → (b : Bool) (x : A) → (if b then x else x) ≡ x
-if-same b x = {!!}
+if-same true x = refl
+if-same false x = refl
 
 
 {-
@@ -394,7 +408,7 @@ trans {A}{x}{.x}{.x} refl refl = refl
 {- Now try to prove congruence yourself: -}
 
 cong : {A B : Set} (f : A → B) {x y : A} → x ≡ y → f x ≡ f y
-cong f {x}{y} p = {!!}
+cong f {x} {.x} refl = refl
 
 {-
 If you have a proof of an absurd equality (for example true ≡ false),
@@ -411,13 +425,14 @@ You may have to do a non-absurd case split on one of the arguments first. Try th
 different approaches:
 -}
 not-zero-and-one : (n : Nat) → n ≡ 0 → n ≡ 1 → ⊥
-not-zero-and-one n eq0 eq1 = {!!}
+not-zero-and-one zero eq0 ()
+not-zero-and-one (suc n) ()
 
 not-zero-and-one' : (n : Nat) → n ≡ 0 → n ≡ 1 → ⊥
-not-zero-and-one' n eq0 eq1 = {!!}
+not-zero-and-one' .0 refl ()
 
 not-zero-and-one'' : (n : Nat) → n ≡ 0 → n ≡ 1 → ⊥
-not-zero-and-one'' n eq0 eq1 = {!!}
+not-zero-and-one'' .1 () refl
 
 {-
 Here's another exercise: if 'b ∨ false' is equal to true, then b must be equal to true.
@@ -425,7 +440,8 @@ Hint: if you start by trying to pattern match on `eq`, you get a very interestin
 message.
 -}
 ∨-first : (b : Bool) → b ∨ false ≡ true → b ≡ true
-∨-first b eq = {!!}
+∨-first true refl = refl
+∨-first false ()
 
 {-
 Finally, it is worth noting that equality proofs contain no information other than their
@@ -433,7 +449,7 @@ existence. Indeed, all proofs of the same equality are equal. This fact is calle
 of identity proofs (UIP) and is by default provable in Agda:
 -}
 uip : {A : Set} {x y : A} {p q : x ≡ y} → p ≡ q
-uip {A}{x}{y}{p}{q} = {!!}
+uip {A} {x} {.x} {refl} {refl} = refl
 {-
 Homotopy Type Theory (HoTT), an active domain of research, investigates the virtues of
 not having UIP and instead viewing equality proofs as data. This is beyond the scope
@@ -452,12 +468,12 @@ As people, we know that 0 + n = n = n + 0.
 The first equality is easy to prove ...
 -}
 plus0-left : (n : Nat) → 0 + n ≡ n
-plus0-left n = {!!}
+plus0-left n = refl
 
 {- ... but the second one is a bit harder. Can you guess why? -}
 plus0-right : (n : Nat) → n + 0 ≡ n
-plus0-right zero = {!!}
-plus0-right (suc n) = {!!}
+plus0-right zero = refl
+plus0-right (suc n) = cong suc (plus0-right n)
 {-
 hint 1: you can make a recursive call `plus0-right n` to get a proof of `n + 0 ≡ n`
         Under the Curry-Howard correspondence, a recursive function corresponds to
@@ -468,15 +484,20 @@ Prove that addition on natural numbers is associative. Try to use as few cases
 as possible. (It's possible to use only 2!)
 -}
 plus-assoc : (k l m : Nat) → k + (l + m) ≡ (k + l) + m
-plus-assoc k l m = {!!}
+plus-assoc zero l m = refl
+plus-assoc (suc k) l m = cong suc (plus-assoc k l m)
 
 {-
 Now prove that addition is commutative. This proof is harder than the ones before,
 so you may have to introduce a helper function to finish it.
 -}
-plus-comm : (m n : Nat) → m + n ≡ n + m
-plus-comm m n = {!!}
 
+plus-comm : (m n : Nat) → m + n ≡ n + m
+plus-comm m zero = plus0-right m
+plus-comm m (suc n) = trans (aux m n) (cong suc (plus-comm m n))
+  where aux : (m n : Nat) → m + suc n ≡ suc (m + n)
+        aux zero n = refl
+        aux (suc m) n = cong suc (aux m n)
 
 
 {-
@@ -495,18 +516,19 @@ Prove the following lemma:
 If (A or B) implies C, then A implies C and B implies C
 -}
 split-assumption : {A B C : Set} → (A ⊎ B → C) → (A → C) × (B → C)
-split-assumption f = {!!}
+split-assumption f = (λ x → f (left x)) , (λ x → f (right x))
 
 --note that we do not need lambda-abstractions when we use _×'_:
 split-assumption' : {A B C : Set} → (A ⊎ B → C) → (A → C) ×' (B → C)
-fst' (split-assumption' f) a = {!!}
-snd' (split-assumption' f) b = {!!}
+fst' (split-assumption' f) a = f (left a)
+snd' (split-assumption' f) b = f (right b)
 
 {-
 State and prove (using _×_):
 If A implies (B and C), then A implies B and A implies C
 -}
-
+ex1 : {A B C : Set} → (A → B × C) → (A → B) × (A → C)
+ex1 f = (λ x → fst (f x)) , (λ x → snd (f x))
 
 
 {-
@@ -525,7 +547,7 @@ consisting of a pattern should be placed in parentheses, e.g. `(left x)`.
 If the first argument's type is already empty, we can simply write `λ ()`.
 -}
 lemma : {A B : Set} → (A → B) → (A ⊎ ⊥ → B) × (⊥ → A)
-lemma f = {!!}
+lemma f = (λ { (left a) → f a ; (right ()) }) , λ()
 
 
 {- 
@@ -545,7 +567,10 @@ of `Dec (P x)` for every argument x. For example, we can decide whether two
 booleans are equal:
 -}
 equalBool? : (x y : Bool) → Dec (x ≡ y)
-equalBool? x y = {!!}
+equalBool? true true = yes refl
+equalBool? false false = yes refl
+equalBool? true false = no λ()
+equalBool? false true = no λ()
 
 {-
 Decidable equality for natural numbers is a little trickier because we need
@@ -554,13 +579,13 @@ the value of a recursive call, which you need to complete the proof that equalit
 on natural numbers is decidable.
 -}
 equalNat? : (m n : Nat) → Dec (m ≡ n)
-equalNat? zero zero = {!!}
-equalNat? zero (suc n) = {!!}
-equalNat? (suc m) zero = {!!}
+equalNat? zero zero = yes refl
+equalNat? zero (suc n) = no λ()
+equalNat? (suc m) zero = no λ()
 -- 
 equalNat? (suc m) (suc n) with equalNat? m n 
-equalNat? (suc m) (suc n) | yes eq = {!!}
-equalNat? (suc m) (suc n) | no neq = {!!}
+equalNat? (suc m) (suc n) | yes eq = yes (cong suc eq)
+equalNat? (suc m) (suc n) | no neq = no λ pf → neq (cong (_- 1) pf)
 
 
 
