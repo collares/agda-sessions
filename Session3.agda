@@ -297,7 +297,22 @@ normalization : ∀ {t tyT} → t ∈ tyT → Σ[ t' ∈ Term ] ((t ↝* t') × 
 normalization d-True  = tmTrue  , done , valTrue
 normalization d-False = tmFalse , done , valFalse
 normalization d-Zero  = tmZero  , done , valNum valZero
-normalization (d-If dt dt₁ dt₂) = {!!}
-normalization (d-Succ dt)       = {!!}
-normalization (d-Pred dt)       = {!!}
-normalization (d-Iszero dt)     = {!!}
+normalization (d-If dt dt₁ dt₂) with normalization dt
+...                             | t′ , t↝*t′ , vt′ with vt′   | preservation* t↝*t′ dt
+...                                                | valTrue  | t'∈Bool with normalization dt₁
+...                                                                     | t₁′ , t₁↝*t₁′ , vt₁ = t₁′ , (step* (map* e-If t↝*t′) , (step e-IfTrue  , t₁↝*t₁′)) , vt₁
+normalization (d-If dt dt₁ dt₂) | t′ , t↝*t′ , vt′ | valFalse | t'∈Bool with normalization dt₂
+...                                                                     | t₂′ , t₂↝*t₂′ , vt₂ = t₂′ , (step* (map* e-If t↝*t′) , (step e-IfFalse , t₂↝*t₂′)) , vt₂
+normalization (d-If dt dt₁ dt₂) | t′ , t↝*t′ , vt′ | valNum valZero     | ()
+normalization (d-If dt dt₁ dt₂) | t′ , t↝*t′ , vt′ | valNum (valSucc _) | () -- seems to compile without this line or without the one above, but not without both?!
+normalization (d-Succ dt) with normalization dt
+...                       | t′ , t↝*t′ , vt′ with vt′          | preservation* t↝*t′ dt
+...                                          | valNum {tnv} pf | t′∈Nat = tmSucc tnv , (map* e-Succ t↝*t′) , valNum (valSucc pf)
+normalization (d-Pred dt) with normalization dt
+...                       | t′ , t↝*t′ , vt′ with vt′                     | preservation* t↝*t′ dt
+...                                          | valNum valZero             | t′∈Nat = tmZero , (step* (map* e-Pred t↝*t′) , (step e-PredZero     , done)) , valNum valZero
+...                                          | valNum (valSucc {tnv} inv) | t′∈Nat = tnv    , (step* (map* e-Pred t↝*t′) , (step e-PredSucc inv , done)) , valNum inv
+normalization (d-Iszero dt) with normalization dt
+...                         | t′ , t↝*t′ , vt′ with vt′               | preservation* t↝*t′ dt
+...                                            | valNum valZero       | t′∈Nat = tmTrue  , (step* (map* e-Iszero t↝*t′) , (step e-IszeroZero     , done)) , valTrue
+...                                            | valNum (valSucc inv) | t′∈Nat = tmFalse , (step* (map* e-Iszero t↝*t′) , (step e-IszeroSucc inv , done)) , valFalse
