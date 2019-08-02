@@ -39,7 +39,7 @@ open import Data.Nat.Properties using
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 --Booleans.
-open import Data.Bool renaming (not to ¬)
+open import Data.Bool renaming (not to ¬) hiding (_≤_)
 --The unit type (⊤).
 open import Data.Unit hiding (_≤_)
 open import Data.Empty
